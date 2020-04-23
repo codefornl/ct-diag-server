@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/dstotijn/ct-diag-server/diag"
+	"github.com/dstotijn/ct-diag-server/dp3t"
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 )
@@ -28,6 +30,13 @@ func NewHandler(repo diag.Repository) http.Handler {
 	router.POST("/diagnosis-keys", h.postDiagnosisKeys)
 	router.GET("/health", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		w.Write([]byte("OK"))
+	})
+
+	// dp3t
+	router.GET("/v1/exposed/{dayDateStr}", h.dp3tV1ExposedDayDateStrGet)
+	router.POST("/v1/exposed", h.dp3tV1ExposedPost)
+	router.GET("/v1/", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		w.Write([]byte("Hello from DP3T"))
 	})
 
 	return router
@@ -123,6 +132,24 @@ func (h *handler) postDiagnosisKeys(w http.ResponseWriter, r *http.Request, _ ht
 		writeInternalErrorResp(w, err)
 		return
 	}
+}
+
+// V1ExposedDayDateStrGet :
+// apiversion: dp3t - v1
+// Handler for V1ExposedDayDateStrGet route
+func (h *handler) dp3tV1ExposedDayDateStrGet(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	response := &dp3t.ExposedOverview{}
+	json.NewEncoder(w).Encode(response)
+	w.WriteHeader(http.StatusOK)
+}
+
+// V1ExposedPost :
+// apiversion: dp3t - v1
+// Handler for V1ExposedPost route
+func (h *handler) dp3tV1ExposedPost(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
 }
 
 func writeInternalErrorResp(w http.ResponseWriter, err error) {
